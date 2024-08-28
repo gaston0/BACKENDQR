@@ -150,6 +150,12 @@ public class QuestionController {
         return ResponseEntity.ok(acceptedAnswer);
     }
 
+    @PutMapping("/{answerId}/unaccept")
+    public ResponseEntity<Answer> unacceptAnswer(@PathVariable Long answerId) {
+        Answer unacceptedAnswer = questionService.unacceptAnswer(answerId);
+        return ResponseEntity.ok(unacceptedAnswer);
+    }
+
     /*@PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createQuestion(@Valid @ModelAttribute QuestionRequestWrapper questionRequestWrapper, @AuthenticationPrincipal UserDetails userDetails) {
         String username = userDetails.getUsername();
@@ -186,11 +192,22 @@ public class QuestionController {
         return ResponseEntity.ok().body(answer);
     }
     @PutMapping("/{questionId}/answers/{answerId}")
-    public ResponseEntity<?> updateAnswer(@PathVariable Long questionId, @PathVariable Long answerId, @Valid @RequestBody AnswerRequest answerRequest) {
-        Answer answer = questionService.updateAnswer(questionId, answerId, answerRequest);
-        return ResponseEntity.ok(new MessageResponse("Answer updated successfully!"));
-    }
-    @DeleteMapping("/{questionId}/answers/{answerId}")
+    public ResponseEntity<?> updateAnswer(
+            @PathVariable Long questionId,
+            @PathVariable Long answerId,
+            @RequestParam("content") String content,
+            @RequestParam(value = "file", required = false) MultipartFile file) {
+
+        try {
+            AnswerRequest answerRequest = new AnswerRequest();
+            answerRequest.setContent(content);
+
+            Answer updatedAnswer = questionService.updateAnswer(questionId, answerId, answerRequest, file);
+            return ResponseEntity.ok(updatedAnswer);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating answer");
+        }
+    }    @DeleteMapping("/{questionId}/answers/{answerId}")
     public ResponseEntity<?> deleteAnswer(@PathVariable Long questionId, @PathVariable Long answerId) {
         questionService.deleteAnswer(questionId, answerId);
         return ResponseEntity.ok(new MessageResponse("Answer deleted successfully!"));

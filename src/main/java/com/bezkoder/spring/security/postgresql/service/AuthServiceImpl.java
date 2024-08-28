@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
+import javax.transaction.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -87,6 +88,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public ResponseEntity<?> resetPassword(ResetPasswordRequest resetPasswordRequest) {
         Optional<User> userOptional = userRepository.findByEmail(resetPasswordRequest.getEmail());
         if (userOptional.isEmpty()) {

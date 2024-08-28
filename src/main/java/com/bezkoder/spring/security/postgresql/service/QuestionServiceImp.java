@@ -3,8 +3,11 @@ package com.bezkoder.spring.security.postgresql.service;
 import com.bezkoder.spring.security.postgresql.Dto.*;
 import com.bezkoder.spring.security.postgresql.Exeception.AnswerNotFoundException;
 import com.bezkoder.spring.security.postgresql.Exeception.ResourceNotFoundException;
+import com.bezkoder.spring.security.postgresql.controllers.AnswerRequestWrapper;
 import com.bezkoder.spring.security.postgresql.controllers.QuestionRequestWrapper;
 import com.bezkoder.spring.security.postgresql.models.*;
+import org.springframework.security.core.GrantedAuthority;
+
 import com.bezkoder.spring.security.postgresql.payload.request.AnswerRequest;
 import com.bezkoder.spring.security.postgresql.payload.request.QuestionRequest;
 import com.bezkoder.spring.security.postgresql.payload.response.MessageResponse;
@@ -16,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -79,7 +83,7 @@ public class QuestionServiceImp implements QuestionService{
     public List<Question> searchQuestions(String keyword) {
         return questionRepository.searchQuestions(keyword);
     }
-
+@Transactional
     public List<QuestionDto> getAllQuestions1() {
         return questionRepository.findAll().stream()
                 .map(this::convertToDto)
@@ -265,6 +269,7 @@ public class QuestionServiceImp implements QuestionService{
         dto.setTags(question.getTags().stream().map(Tag::getName).collect(Collectors.toSet()));
         dto.setFile(question.getFile());
         dto.setContentType(question.getContentType());
+        dto.setUserAnonymous(question.getUserAnonymous());
         dto.setTags(question.getTags().stream().map(Tag::getName).collect(Collectors.toSet()));
         dto.setAnswers(question.getAnswers().stream().map(this::mapAnswerToDto).collect(Collectors.toList()));
         dto.setFavorites(question.getFavorites().stream().map(this::mapFavoriteToDto).collect(Collectors.toList()));
@@ -274,6 +279,7 @@ public class QuestionServiceImp implements QuestionService{
 
     }
     @Override
+    @Transactional
     public AnswerDto mapAnswerToDto(Answer answer) {
         AnswerDto dto = new AnswerDto();
         dto.setId(answer.getId());
@@ -297,6 +303,7 @@ public class QuestionServiceImp implements QuestionService{
         return dto;
     }
     @Override
+    @Transactional
     public AnswerResponseDto mapToAnswerResponseDto(AnswerResponse answerResponse) {
         AnswerResponseDto dto = new AnswerResponseDto();
         dto.setId(answerResponse.getId());
@@ -324,6 +331,16 @@ public class QuestionServiceImp implements QuestionService{
 
         // Mark the selected answer as accepted
         answer.setAccepted(true);
+        return answerRepository.save(answer);
+    }
+
+    @Transactional
+    public Answer unacceptAnswer(Long answerId) {
+        Answer answer = answerRepository.findById(answerId)
+                .orElseThrow(() -> new AnswerNotFoundException(answerId));
+
+        // Set the selected answer as not accepted
+        answer.setAccepted(false);
         return answerRepository.save(answer);
     }
 
@@ -413,14 +430,33 @@ public void deleteQuestion(Long questionId) {
     }
 
     @Override
-    public Answer updateAnswer(Long questionId, Long answerId, AnswerRequest answerRequest) {
+    public Answer updateAnswer(Long questionId, Long answerId, AnswerRequest answerRequest, MultipartFile file) {
         Answer answer = answerRepository.findById(answerId)
                 .orElseThrow(() -> new RuntimeException("Answer not found"));
+
         if (!answer.getQuestion().getId().equals(questionId)) {
             throw new RuntimeException("Answer does not belong to the specified question");
         }
+
         answer.setContent(answerRequest.getContent());
         answer.setUpdatedAt(new Date());
+
+        if (file != null && !file.isEmpty()) {
+            String contentType = file.getContentType();
+            if (!contentType.equals("image/jpeg") &&
+                    !contentType.equals("image/png") &&
+                    !contentType.equals("application/pdf")) {
+                throw new RuntimeException("Unsupported file type");
+            }
+
+            try {
+                answer.setFile(file.getBytes());
+                answer.setContentType(file.getContentType());
+            } catch (IOException e) {
+                throw new RuntimeException("Error reading file", e);
+            }
+        }
+
         return answerRepository.save(answer);
     }
 
@@ -595,10 +631,14 @@ public void deleteQuestion(Long questionId) {
     }
 
     @Override
+    @Transactional
     public void deleteResponseToAnswer(Long questionId, Long parentAnswerId, Long responseId, String username) {
+
+        // Fetch the user to confirm their identity and existence
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        // Fetch the parent answer and ensure it belongs to the given question
         Answer parentAnswer = answerRepository.findById(parentAnswerId)
                 .orElseThrow(() -> new RuntimeException("Parent Answer not found"));
 
@@ -606,15 +646,19 @@ public void deleteQuestion(Long questionId) {
             throw new RuntimeException("Parent Answer does not belong to the specified question");
         }
 
+        // Fetch the response to the answer and verify its existence
         AnswerResponse response = answerResponseRepository.findById(responseId)
                 .orElseThrow(() -> new RuntimeException("Response to Answer not found"));
 
-        if (!response.getUser().getUsername().equals(username)) {
-            throw new RuntimeException("User is not authorized to delete this response to answer");
+        // Check if the response belongs to the correct parent answer
+        if (!response.getParentAnswer().getId().equals(parentAnswerId)) {
+            throw new RuntimeException("Response does not belong to the specified parent answer");
         }
 
+        // Perform the deletion
         answerResponseRepository.delete(response);
     }
+
     public void associateTagWithQuestion(Long questionId, Tag tag) {
         Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Question", "id", questionId));

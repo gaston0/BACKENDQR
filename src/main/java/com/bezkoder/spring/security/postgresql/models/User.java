@@ -51,13 +51,7 @@ public class User {
   @NotBlank
   @Size(max = 120)
   private String password;
-  @OneToMany(mappedBy = "sender")
-  @JsonIgnore
-  private Set<Message> sentMessages = new HashSet<>();
 
-  @OneToMany(mappedBy = "receiver")
-  @JsonIgnore
-  private Set<Message> receivedMessages = new HashSet<>();
   @ManyToMany
   @JoinTable(
           name = "user_badges",
@@ -135,21 +129,6 @@ public class User {
     this.reputation = reputation;
   }
 
-  public Set<Message> getSentMessages() {
-    return sentMessages;
-  }
-
-  public void setSentMessages(Set<Message> sentMessages) {
-    this.sentMessages = sentMessages;
-  }
-
-  public Set<Message> getReceivedMessages() {
-    return receivedMessages;
-  }
-
-  public void setReceivedMessages(Set<Message> receivedMessages) {
-    this.receivedMessages = receivedMessages;
-  }
 
   public Set<Question> getQuestions() {
     return questions;

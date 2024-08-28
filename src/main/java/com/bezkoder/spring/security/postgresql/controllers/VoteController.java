@@ -2,44 +2,43 @@ package com.bezkoder.spring.security.postgresql.controllers;
 
 import com.bezkoder.spring.security.postgresql.repository.VoteRepository;
 import com.bezkoder.spring.security.postgresql.service.VoteService;
-import com.bezkoder.spring.security.postgresql.service.VoteServiceImp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.OptionalInt;
 
 @RestController
-    @RequestMapping("/api/votes")
+@RequestMapping("/api/votes")
 public class VoteController {
+
     @Autowired
     private VoteService voteService;
 
-@Autowired
+    @Autowired
     private VoteRepository voteRepository;
 
-
     @PostMapping("/{entityType}/{entityId}")
-    public ResponseEntity<String> vote(
+    public ResponseEntity<Map<String, Object>> vote(
             @PathVariable Long entityId,
             @PathVariable String entityType,
             @RequestParam Long userId,
             @RequestParam int value) {
 
-     voteService.vote(userId, entityId, entityType, value);
-        return ResponseEntity.ok("Voted successfully");
+        // Call the vote service and get the response map containing the updated votes and user vote
+        ResponseEntity<Map<String, Object>> voteResponse = voteService.vote(userId, entityId, entityType, value);
 
-
+        // Return the response directly from the service
+        return voteResponse;
     }
-
 
     @GetMapping("/status")
     public ResponseEntity<Map<String, Integer>> getVoteStatus(
             @RequestParam Long entityId,
             @RequestParam String entityType,
             @RequestParam Long userId) {
+
         int voteValue = voteService.getVoteValue(userId, entityId, entityType);
 
         // Safely handle null value from repository
@@ -51,5 +50,5 @@ public class VoteController {
         response.put("totalVotes", totalVotes);
 
         return ResponseEntity.ok(response);
-    }}
-
+    }
+}

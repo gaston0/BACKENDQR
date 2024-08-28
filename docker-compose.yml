@@ -1,0 +1,74 @@
+services:
+  postgres:
+    container_name: postgres-sql-bsn
+    image: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=admin
+      - PGDATA='/var/lib/postgresql/data'
+      - POSTGRES_DB=sopra-helper
+    volumes:
+      - postgres:/data/postgres
+    ports:
+      - 5432:5432
+      #networks:
+      # - spring-demo
+    restart: unless-stopped
+
+  bsn-api:
+    container_name: bsn-api
+    image: bsn/bsn:1.0.0
+    ports:
+      - 8080:8080
+    # networks:
+    # - spring-demo
+    depends_on:
+      - postgres
+
+  prometheus:
+    image: prom/prometheus:v2.46.0
+    ports:
+      - 9090:9090
+    volumes:
+      - ./docker/prometheus/tmp:/prometheus
+      - ./docker/prometheus/config:/etc/prometheus
+    command: --config.file=/etc/prometheus/prometheus.yml --log.level=debug
+
+  grafana:
+    image: grafana/grafana:10.0.3
+    ports:
+      - 4000:4000
+    volumes:
+      - ./docker/grafana/tmp:/var/lib/grafana
+      - ./docker/grafana/grafana.ini:/etc/grafana/grafana.ini
+
+  alertmanager:
+    image: prom/alertmanager:v0.25.0
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./docker/alert-manager/tmp:/data
+      - ./docker/alert-manager/config:/config
+    command: --config.file=/config/alertmanager.yml --log.level=debug
+
+
+  front:
+    container_name: front-container
+    image: front-image
+    ports:
+      - 3000:80
+    # networks:
+    #  - spring-demo
+    depends_on:
+      - bsn-api
+
+
+
+
+  #networks:
+  # spring-demo:
+  #   driver: bridge
+
+volumes:
+  postgres:
+    driver: local

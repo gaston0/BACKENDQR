@@ -1,5 +1,7 @@
 package com.bezkoder.spring.security.postgresql.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -24,7 +26,7 @@ import com.bezkoder.spring.security.postgresql.security.services.UserDetailsServ
 import org.springframework.security.web.firewall.HttpFirewall;
 import org.springframework.security.web.firewall.StrictHttpFirewall;
 import org.springframework.web.cors.CorsConfiguration;
-import springfox.documentation.swagger2.annotations.EnableSwagger2;
+//import springfox.documentation.swagger2.annotations.EnableSwagger2;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.context.annotation.Configuration;
@@ -37,7 +39,7 @@ import java.util.Arrays;
 // (securedEnabled = true,
 // jsr250Enabled = true,
 // prePostEnabled = true) // by default
-@EnableSwagger2
+//@EnableSwagger2
 
 
 public class WebSecurityConfig implements WebMvcConfigurer { // extends WebSecurityConfigurerAdapter {
@@ -67,10 +69,11 @@ public class WebSecurityConfig implements WebMvcConfigurer { // extends WebSecur
 
     return authProvider;
   }
+  @Override
 
   public void addCorsMappings(CorsRegistry registry) {
     registry.addMapping("/**")
-            .allowedOrigins("*")
+            .allowedOrigins("http://localhost:3000")
             .allowedMethods("GET", "POST", "PUT", "DELETE")
             .allowedHeaders("*");
   }
@@ -80,6 +83,8 @@ public class WebSecurityConfig implements WebMvcConfigurer { // extends WebSecur
     firewall.setAllowUrlEncodedPercent(true); // Allow % in URLs
     return firewall;
   }
+
+
 
 //  @Bean
 //  @Override
@@ -117,7 +122,7 @@ public class WebSecurityConfig implements WebMvcConfigurer { // extends WebSecur
             .exceptionHandling(exception -> exception.authenticationEntryPoint(this.unauthorizedHandler))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeRequests(authorize -> authorize
-                    .antMatchers("/api/**", "/api/test/**", "/ws/**").permitAll()
+                    .antMatchers("/api/**", "/api/test/**", "/ws/**", "/chat-websocket/**", "/topic/**").permitAll()
                     .antMatchers("/v2/api-docs", "/configuration/**", "/swagger*/**", "/webjars/**").permitAll()
                     .anyRequest().authenticated()
             );

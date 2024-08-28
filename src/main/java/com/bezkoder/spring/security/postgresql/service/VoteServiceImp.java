@@ -6,8 +6,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Service
 public class VoteServiceImp implements VoteService {
+
     @Autowired
     private UserRepository userRepository;
 
@@ -23,20 +27,24 @@ public class VoteServiceImp implements VoteService {
     @Autowired
     private VoteRepository voteRepository;
 
-    public ResponseEntity<String> vote(Long userId, Long entityId, String entityType, int value) {
+    public ResponseEntity<Map<String, Object>> vote(Long userId, Long entityId, String entityType, int value) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Error: User is not found."));
 
         Vote vote = voteRepository.findByUserAndEntityIdAndEntityType(user, entityId, entityType);
-System.out.println(vote)   ;
+
         if (vote != null) {
-            if (value == 0 || value == 1) {
-                vote.setValue(value);
+            if (vote.getValue() == value) {
+                // User clicked the same vote again, remove the vote
+                voteRepository.delete(vote);
             } else {
-                throw new RuntimeException("Error: Vote value is not valid.");
+                // Update the existing vote
+                vote.setValue(value);
+                voteRepository.save(vote);
             }
         } else {
             if (value >= -1 && value <= 1) {
+                // Create a new vote
                 vote = new Vote();
                 vote.setUser(user);
                 vote.setEntityId(entityId);
@@ -62,24 +70,52 @@ System.out.println(vote)   ;
                     default:
                         throw new RuntimeException("Error: Invalid entityType.");
                 }
+
+                voteRepository.save(vote);
             } else {
-                throw new RuntimeException("Error: Vote value is not valid2.");
+                throw new RuntimeException("Error: Vote value is not valid.");
             }
         }
 
-        voteRepository.save(vote);
-        return ResponseEntity.ok("Vote successful");
+        // Calculate the updated vote count
+        int updatedVotes = calculateUpdatedVotes(entityId, entityType);
+
+        // Prepare the response data
+        Map<String, Object> response = new HashMap<>();
+        response.put("updatedVotes", updatedVotes);
+        response.put("userVote", vote != null ? vote.getValue() : null);
+
+        return ResponseEntity.ok(response);
+    }
+
+    private int calculateUpdatedVotes(Long entityId, String entityType) {
+        Integer sumVotes = null;
+
+        switch (entityType) {
+            case "Question":
+                sumVotes = voteRepository.sumVotesByQuestionId(entityId);
+                break;
+            case "Answer":
+                sumVotes = voteRepository.sumVotesByAnswerId(entityId);
+                break;
+            case "AnswerResponse":
+                sumVotes = voteRepository.sumVotesByAnswerResponseId(entityId);
+                break;
+            default:
+                throw new RuntimeException("Error: Invalid entityType.");
+        }
+
+        // Handle the null case by returning 0 if sumVotes is null
+        return (sumVotes != null) ? sumVotes : 0;
     }
 
 
 
+
     public int getVoteValue(Long userId, Long entityId, String entityType) {
-
-
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Error: User is not found."));
         Vote vote = voteRepository.findByUserAndEntityIdAndEntityType(user, entityId, entityType);
         return vote != null ? vote.getValue() : -1; // Assuming -1 means no vote
     }
 }
-

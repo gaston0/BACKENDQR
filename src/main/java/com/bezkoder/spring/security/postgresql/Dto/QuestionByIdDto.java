@@ -21,6 +21,11 @@ public class QuestionByIdDto {
     private Set<String> tags;
     private String Title;
     private Long userId;
+    private boolean userAnonymous;
+    private int voteCount;
+    private int answerCount;
+
+
 
 
 }
