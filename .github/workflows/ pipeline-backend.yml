@@ -80,8 +80,8 @@ jobs:
         image: postgres:latest
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: admin
-          POSTGRES_DB: sopra-helper
+          POSTGRES_PASSWORD: CulerMG1889++
+          POSTGRES_DB: sopra
         ports:
           - 5432:5432
         options: >-
