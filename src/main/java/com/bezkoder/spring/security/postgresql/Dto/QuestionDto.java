@@ -1,5 +1,6 @@
 package com.bezkoder.spring.security.postgresql.Dto;
 
+import com.bezkoder.spring.security.postgresql.models.Vote;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -22,7 +23,7 @@ public class QuestionDto {
     private List<Map<String, Object>> favorites;
 
 
-
+    private Set<Vote> votes;
     private List<AnswerDto> answers;
     private Set<String> tags;
     private int voteCount;

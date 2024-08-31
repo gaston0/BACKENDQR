@@ -270,6 +270,7 @@ public class QuestionServiceImp implements QuestionService{
         dto.setFile(question.getFile());
         dto.setContentType(question.getContentType());
         dto.setUserAnonymous(question.getUserAnonymous());
+        dto.setVotes(question.getVotes());
         dto.setTags(question.getTags().stream().map(Tag::getName).collect(Collectors.toSet()));
         dto.setAnswers(question.getAnswers().stream().map(this::mapAnswerToDto).collect(Collectors.toList()));
         dto.setFavorites(question.getFavorites().stream().map(this::mapFavoriteToDto).collect(Collectors.toList()));
@@ -298,7 +299,8 @@ public class QuestionServiceImp implements QuestionService{
         dto.setResponses(answer.getResponses().stream().map(this::mapToAnswerResponseDto).collect(Collectors.toList()));
 
 
-        dto.setVotes(answer.getVotes().stream().map(Vote::toString).collect(Collectors.toList()));
+        Set<Vote> votes = answer.getVotes().stream().collect(Collectors.toSet());
+        dto.setVotes(votes);
         dto.setFavorites(answer.getFavorites().stream().map(Favorite::toString).collect(Collectors.toList()));
         return dto;
     }
@@ -633,14 +635,18 @@ public void deleteQuestion(Long questionId) {
     @Override
     @Transactional
     public void deleteResponseToAnswer(Long questionId, Long parentAnswerId, Long responseId, String username) {
+        // Log initial information
+
 
         // Fetch the user to confirm their identity and existence
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+
         // Fetch the parent answer and ensure it belongs to the given question
         Answer parentAnswer = answerRepository.findById(parentAnswerId)
                 .orElseThrow(() -> new RuntimeException("Parent Answer not found"));
+
 
         if (!parentAnswer.getQuestion().getId().equals(questionId)) {
             throw new RuntimeException("Parent Answer does not belong to the specified question");
@@ -650,6 +656,7 @@ public void deleteQuestion(Long questionId) {
         AnswerResponse response = answerResponseRepository.findById(responseId)
                 .orElseThrow(() -> new RuntimeException("Response to Answer not found"));
 
+
         // Check if the response belongs to the correct parent answer
         if (!response.getParentAnswer().getId().equals(parentAnswerId)) {
             throw new RuntimeException("Response does not belong to the specified parent answer");
@@ -657,7 +664,10 @@ public void deleteQuestion(Long questionId) {
 
         // Perform the deletion
         answerResponseRepository.delete(response);
+        answerResponseRepository.flush();
+
     }
+
 
     public void associateTagWithQuestion(Long questionId, Tag tag) {
         Question question = questionRepository.findById(questionId)

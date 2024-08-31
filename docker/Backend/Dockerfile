@@ -12,8 +12,8 @@ ARG APP_VERSION=1.0.0
 WORKDIR /app
 COPY --from=build /build/target/spring-boot-*.jar /app/
 EXPOSE 8080
-ENV DB_URL=jdbc:postgresql://postgres-sql-bsn:5432/sopra-helper
-ENV DB_PWD=admin
+ENV DB_URL=jdbc:postgresql://postgres-sql-bsn:5432/sopra
+ENV DB_PWD=CulerMG1889++
 ENV MAILDEV_URL=localhost
 ENV ACTIVE_PROFILE =${PROFILE}
 ENV JAR_VERSION =${APP_VERSION}

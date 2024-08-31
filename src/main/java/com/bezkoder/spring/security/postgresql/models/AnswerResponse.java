@@ -80,7 +80,7 @@ public class AnswerResponse {
         this.parentAnswer = parentAnswer;
     }
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "parent_answer_id")
     @JsonIgnore
     private Answer parentAnswer;

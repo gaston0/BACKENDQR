@@ -1,8 +1,10 @@
 package com.bezkoder.spring.security.postgresql.Dto;
 
 import com.bezkoder.spring.security.postgresql.models.Question;
+import com.bezkoder.spring.security.postgresql.models.Vote;
 
 import java.util.List;
+import java.util.Set;
 
 public class AnswerDto {
     private Long id;
@@ -18,7 +20,7 @@ public class AnswerDto {
     }
 
     private List<AnswerResponseDto> responses;
-    private List<String> votes;
+    private Set<Vote> votes;
     private byte[] file;
 
 
@@ -52,7 +54,7 @@ public class AnswerDto {
 
 
 
-    public List<String> getVotes() {
+    public Set<Vote> getVotes() {
         return votes;
     }
 
@@ -60,7 +62,7 @@ public class AnswerDto {
 
 
 
-    public void setVotes(List<String> votes) {
+    public void setVotes(Set<Vote> votes) {
         this.votes = votes;
     }
 

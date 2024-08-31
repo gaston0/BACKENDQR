@@ -1,6 +1,6 @@
+// src/main/java/com/bezkoder/spring/security/postgresql/controllers/VoteController.java
 package com.bezkoder.spring.security.postgresql.controllers;
 
-import com.bezkoder.spring.security.postgresql.repository.VoteRepository;
 import com.bezkoder.spring.security.postgresql.service.VoteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -16,21 +16,22 @@ public class VoteController {
     @Autowired
     private VoteService voteService;
 
-    @Autowired
-    private VoteRepository voteRepository;
-
-    @PostMapping("/{entityType}/{entityId}")
-    public ResponseEntity<Map<String, Object>> vote(
+    // Endpoint pour Liker
+    @PostMapping("/like/{entityType}/{entityId}")
+    public ResponseEntity<Map<String, Object>> like(
             @PathVariable Long entityId,
             @PathVariable String entityType,
-            @RequestParam Long userId,
-            @RequestParam int value) {
+            @RequestParam Long userId) {
+        return voteService.like(userId, entityId, entityType);
+    }
 
-        // Call the vote service and get the response map containing the updated votes and user vote
-        ResponseEntity<Map<String, Object>> voteResponse = voteService.vote(userId, entityId, entityType, value);
-
-        // Return the response directly from the service
-        return voteResponse;
+    // Endpoint pour Disliker
+    @PostMapping("/dislike/{entityType}/{entityId}")
+    public ResponseEntity<Map<String, Object>> dislike(
+            @PathVariable Long entityId,
+            @PathVariable String entityType,
+            @RequestParam Long userId) {
+        return voteService.dislike(userId, entityId, entityType);
     }
 
     @GetMapping("/status")
@@ -40,14 +41,11 @@ public class VoteController {
             @RequestParam Long userId) {
 
         int voteValue = voteService.getVoteValue(userId, entityId, entityType);
-
-        // Safely handle null value from repository
-        Integer totalVotesFromRepo = voteRepository.sumValuesByEntityId(entityId);
-        int totalVotes = (totalVotesFromRepo != null) ? totalVotesFromRepo : 0;
+        Integer totalVotesFromRepo = voteService.calculateUpdatedVotes(entityId, entityType);
 
         Map<String, Integer> response = new HashMap<>();
         response.put("value", voteValue);
-        response.put("totalVotes", totalVotes);
+        response.put("totalVotes", totalVotesFromRepo);
 
         return ResponseEntity.ok(response);
     }

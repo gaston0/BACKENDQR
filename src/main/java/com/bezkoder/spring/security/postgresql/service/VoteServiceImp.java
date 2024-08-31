@@ -1,3 +1,4 @@
+// src/main/java/com/bezkoder/spring/security/postgresql/service/VoteServiceImp.java
 package com.bezkoder.spring.security.postgresql.service;
 
 import com.bezkoder.spring.security.postgresql.models.*;
@@ -27,7 +28,26 @@ public class VoteServiceImp implements VoteService {
     @Autowired
     private VoteRepository voteRepository;
 
+    @Override
     public ResponseEntity<Map<String, Object>> vote(Long userId, Long entityId, String entityType, int value) {
+        return null;
+    }
+
+    // Méthode pour gérer le Like
+    @Override
+    public ResponseEntity<Map<String, Object>> like(Long userId, Long entityId, String entityType) {
+        return handleVote(userId, entityId, entityType, 1); // 1 pour le Like
+    }
+
+    // Méthode pour gérer le Dislike
+    @Override
+    public ResponseEntity<Map<String, Object>> dislike(Long userId, Long entityId, String entityType) {
+        return handleVote(userId, entityId, entityType, 0); // 0 pour le Dislike
+    }
+
+    // Méthode commune pour gérer le Like ou Dislike
+    // Méthode commune pour gérer le Like ou Dislike
+    private ResponseEntity<Map<String, Object>> handleVote(Long userId, Long entityId, String entityType, int value) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Error: User is not found."));
 
@@ -35,52 +55,46 @@ public class VoteServiceImp implements VoteService {
 
         if (vote != null) {
             if (vote.getValue() == value) {
-                // User clicked the same vote again, remove the vote
                 voteRepository.delete(vote);
+                vote = null;
             } else {
-                // Update the existing vote
                 vote.setValue(value);
                 voteRepository.save(vote);
             }
         } else {
-            if (value >= -1 && value <= 1) {
-                // Create a new vote
-                vote = new Vote();
-                vote.setUser(user);
-                vote.setEntityId(entityId);
-                vote.setEntityType(entityType);
-                vote.setValue(value);
+            vote = new Vote();
+            vote.setUser(user);
+            vote.setEntityId(entityId);
+            vote.setEntityType(entityType);
+            vote.setValue(value);
 
-                switch (entityType) {
-                    case "Question":
-                        Question question = questionRepository.findById(entityId)
-                                .orElseThrow(() -> new RuntimeException("Error: Question is not found."));
-                        vote.setQuestion(question);
-                        break;
-                    case "Answer":
-                        Answer answer = answerRepository.findById(entityId)
-                                .orElseThrow(() -> new RuntimeException("Error: Answer is not found."));
-                        vote.setAnswer(answer);
-                        break;
-                    case "AnswerResponse":
-                        AnswerResponse answerResponse = answerResponseRepository.findById(entityId)
-                                .orElseThrow(() -> new RuntimeException("Error: AnswerResponse is not found."));
-                        vote.setAnswerResponse(answerResponse);
-                        break;
-                    default:
-                        throw new RuntimeException("Error: Invalid entityType.");
-                }
-
-                voteRepository.save(vote);
-            } else {
-                throw new RuntimeException("Error: Vote value is not valid.");
+            switch (entityType) {
+                case "Question":
+                    Question question = questionRepository.findById(entityId)
+                            .orElseThrow(() -> new RuntimeException("Error: Question is not found."));
+                    vote.setQuestion(question);
+                    break;
+                case "Answer":
+                    Answer answer = answerRepository.findById(entityId)
+                            .orElseThrow(() -> new RuntimeException("Error: Answer is not found."));
+                    vote.setAnswer(answer);
+                    break;
+                case "AnswerResponse":
+                    AnswerResponse answerResponse = answerResponseRepository.findById(entityId)
+                            .orElseThrow(() -> new RuntimeException("Error: AnswerResponse is not found."));
+                    vote.setAnswerResponse(answerResponse);
+                    break;
+                default:
+                    throw new RuntimeException("Error: Invalid entityType.");
             }
+
+            voteRepository.save(vote);
         }
 
-        // Calculate the updated vote count
+        // Calculer les votes mis à jour
         int updatedVotes = calculateUpdatedVotes(entityId, entityType);
 
-        // Prepare the response data
+        // Préparer la réponse sous forme de Map pour la sérialisation JSON
         Map<String, Object> response = new HashMap<>();
         response.put("updatedVotes", updatedVotes);
         response.put("userVote", vote != null ? vote.getValue() : null);
@@ -88,7 +102,9 @@ public class VoteServiceImp implements VoteService {
         return ResponseEntity.ok(response);
     }
 
-    private int calculateUpdatedVotes(Long entityId, String entityType) {
+
+    @Override
+    public int calculateUpdatedVotes(Long entityId, String entityType) {
         Integer sumVotes = null;
 
         switch (entityType) {
@@ -105,13 +121,10 @@ public class VoteServiceImp implements VoteService {
                 throw new RuntimeException("Error: Invalid entityType.");
         }
 
-        // Handle the null case by returning 0 if sumVotes is null
         return (sumVotes != null) ? sumVotes : 0;
     }
 
-
-
-
+    @Override
     public int getVoteValue(Long userId, Long entityId, String entityType) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Error: User is not found."));
