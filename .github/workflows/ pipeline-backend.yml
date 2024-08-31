@@ -83,7 +83,7 @@ jobs:
           POSTGRES_PASSWORD: CulerMG1889++
           POSTGRES_DB: sopra
         ports:
-          - 5432:5432
+          - 15432:5432
         options: >-
           --health-cmd "pg_isready -U postgres" 
           --health-interval 10s 
