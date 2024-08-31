@@ -147,7 +147,7 @@ jobs:
           platforms: linux/amd64
           tags: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/bsn-api:${{ env.VERSION }}
-            ${{ secrets.DOCKER_HUB_USERNAME }}/bsn-api:latest
+            ${{ secrets.DOCKER_HUB_USERNAME }}/bsn-api:1.0.1
           build-args: |
             PROFILE=dev
             APP_VERSION=${{ env.VERSION }}
