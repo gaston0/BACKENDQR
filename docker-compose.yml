@@ -17,7 +17,7 @@ services:
 
   bsn-api:
     container_name: bsn-api
-    image: bsn/bsn:1.0.0
+    image: bsn/bsn:1.0.1
     ports:
       - 8080:8080
     depends_on:
