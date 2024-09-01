@@ -4,11 +4,6 @@ on:
   push:
     branches:
       - main
-      #paths:
-      # - 'BACKENDQR/**'
-      # - 'docker/Backend/**'
-      #- 'docker-compose.yml'
-      #- 'github/workflows/*-backend.yml'
 
 jobs:
   compile:
@@ -19,16 +14,18 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Setup JDK 17
         uses: actions/setup-java@v3
         with:
           distribution: 'corretto'
           java-version: 17
+
       - name: Grant execute permission for Maven Wrapper
         run: chmod +x mvnw
+
       - name: Compile project
         run: ./mvnw clean compile
-
 
   unit-tests:
     runs-on: ubuntu-latest
@@ -61,10 +58,9 @@ jobs:
 
       - name: Grant execute permission for Maven Wrapper
         run: chmod +x mvnw
+
       - name: Running unit tests
         run: ./mvnw clean test
-
-
 
       - name: Archive test reports
         if: failure()
@@ -89,6 +85,7 @@ jobs:
           --health-interval 10s 
           --health-timeout 5s 
           --health-retries 5
+
     name: Build backend
     needs: [compile, unit-tests]
     steps:
@@ -96,13 +93,16 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Setup JDK
         uses: actions/setup-java@v3
         with:
           java-version: 17
           distribution: 'corretto'
+
       - name: Grant execute permission for Maven Wrapper
         run: chmod +x mvnw
+
       - name: Build project
         run: |
           ./mvnw clean package
@@ -151,4 +151,3 @@ jobs:
           build-args: |
             PROFILE=dev
             APP_VERSION=${{ env.VERSION }}
-  

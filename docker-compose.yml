@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   postgres:
     container_name: postgres-sql-bsn
@@ -5,24 +7,19 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=CulerMG1889++
-
-      - PGDATA='/var/lib/postgresql/data'
+      - PGDATA=/var/lib/postgresql/data
       - POSTGRES_DB=sopra
     volumes:
-      - postgres:/data/postgres
+      - postgres:/var/lib/postgresql/data
     ports:
       - 5432:5432
-      #networks:
-      # - spring-demo
     restart: unless-stopped
 
   bsn-api:
     container_name: bsn-api
-    image: bsn/bsn:1.0.1
+    image: bsn/bsn:1.0.0
     ports:
       - 8080:8080
-    # networks:
-    # - spring-demo
     depends_on:
       - postgres
 
@@ -52,23 +49,13 @@ services:
       - ./docker/alert-manager/config:/config
     command: --config.file=/config/alertmanager.yml --log.level=debug
 
-
   front:
     container_name: front-container
     image: front-image
     ports:
       - 3000:80
-    # networks:
-    #  - spring-demo
     depends_on:
       - bsn-api
-
-
-
-
-  #networks:
-  # spring-demo:
-  #   driver: bridge
 
 volumes:
   postgres:
