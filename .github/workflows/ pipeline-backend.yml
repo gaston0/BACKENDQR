@@ -104,13 +104,12 @@ jobs:
         run: chmod +x mvnw
 
       - name: Build project
-        run: |
-          ./mvnw clean package
+        run: ./mvnw clean package
 
   build-image:
     runs-on: ubuntu-latest
     name: Build Docker image
-    needs: [ build ]
+    needs: [build]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -146,10 +145,8 @@ jobs:
           push: true
           platforms: linux/amd64
           tags: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}bsn-api:${{ env.VERSION }}
-            ${{ secrets.DOCKER_HUB_USERNAME }}bsn-api:1.0.1
+            bennassermedghassen/bsn-api:${{ env.VERSION }}
+            bennassermedghassen/bsn-api:1.0.1
           build-args: |
             PROFILE=dev
             APP_VERSION=${{ env.VERSION }}
-      
-      
