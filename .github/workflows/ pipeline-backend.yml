@@ -152,3 +152,4 @@ jobs:
             PROFILE=dev
             APP_VERSION=${{ env.VERSION }}
       
+      
