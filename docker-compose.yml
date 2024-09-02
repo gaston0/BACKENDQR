@@ -14,6 +14,8 @@ services:
     ports:
       - 5432:5432
     restart: unless-stopped
+    networks:
+      - monitoring_net
 
   bsn-api:
     container_name: bsn-api
@@ -22,6 +24,8 @@ services:
       - 8080:8080
     depends_on:
       - postgres
+    networks:
+      - monitoring_net
 
   prometheus:
     image: prom/prometheus:v2.46.0
@@ -31,6 +35,8 @@ services:
       - ./docker/prometheus/tmp:/prometheus
       - ./docker/prometheus/config:/etc/prometheus
     command: --config.file=/etc/prometheus/prometheus.yml --log.level=debug
+    networks:
+      - monitoring_net
 
   grafana:
     image: grafana/grafana:10.0.3
@@ -39,6 +45,8 @@ services:
     volumes:
       - ./docker/grafana/tmp:/var/lib/grafana
       - ./docker/grafana/grafana.ini:/etc/grafana/grafana.ini
+    networks:
+      - monitoring_net
 
   alertmanager:
     image: prom/alertmanager:v0.25.0
@@ -48,6 +56,8 @@ services:
       - ./docker/alert-manager/tmp:/data
       - ./docker/alert-manager/config:/config
     command: --config.file=/config/alertmanager.yml --log.level=debug
+    networks:
+      - monitoring_net
 
   front:
     container_name: front-container
@@ -56,7 +66,13 @@ services:
       - 3000:80
     depends_on:
       - bsn-api
+    networks:
+      - monitoring_net
 
 volumes:
   postgres:
     driver: local
+
+networks:
+  monitoring_net:
+    driver: bridge

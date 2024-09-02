@@ -42,7 +42,9 @@ public interface QuestionService {
     List<Question> getQuestionsWithoutAnswers();
     List<Question> getQuestionsSortedByVotes();
     List<QuestionDto> findQuestionsByUserIdAndDateRange(Long userId, Date startDate, Date endDate);
-    List<AnswerDto> findAnswersByUserIdAndDateRange(Long userId, Date startDate, Date endDate);    Map<Long, Integer> getTotalVotesForAnswers(List<Long> answerIds) ;
+    List<AnswerDto> findAnswersByUserIdAndDateRange(Long userId, Date startDate, Date endDate);
+    List<AnswerResponseDto> findAnswersResponseByUserIdAndDateRange(Long userId, Date startDate, Date endDate);
+    Map<Long, Integer> getTotalVotesForAnswers(List<Long> answerIds) ;
     Answer unacceptAnswer(Long answerId);
     public AnswerDto mapAnswerToDto(Answer answer);
     public AnswerResponseDto mapToAnswerResponseDto(AnswerResponse answerResponse);

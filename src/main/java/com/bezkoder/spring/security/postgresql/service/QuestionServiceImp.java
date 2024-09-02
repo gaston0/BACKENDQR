@@ -136,6 +136,20 @@ public class QuestionServiceImp implements QuestionService{
                 .map(this::mapAnswerToDto)
                 .collect(Collectors.toList());
     }
+
+    @Transactional
+    @Override
+    public List<AnswerResponseDto> findAnswersResponseByUserIdAndDateRange(Long userId, Date startDate, Date endDate) {
+        // Use the custom repository method to fetch answers based on user ID and date range
+        List<AnswerResponse> answers = answerResponseRepository.findByUserIdAndCreatedAtBetween(userId, startDate, endDate);
+        return answers.stream()
+                .map(this::mapToAnswerResponseDto) // Mapping AnswerResponse to AnswerResponseDto
+                .collect(Collectors.toList());
+    }
+
+    // Mapping method to convert AnswerResponse entity to AnswerResponseDto
+
+
     @Transactional
    @Override
     public List<Question> getQuestionsByTag(String tagName) {
