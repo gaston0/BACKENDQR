@@ -122,7 +122,7 @@ public class WebSecurityConfig implements WebMvcConfigurer { // extends WebSecur
             .exceptionHandling(exception -> exception.authenticationEntryPoint(this.unauthorizedHandler))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeRequests(authorize -> authorize
-                    .antMatchers("/api/**", "/api/test/**", "/ws/**", "/chat-websocket/**", "/topic/**").permitAll()
+                    .antMatchers("/api/**", "/api/test/**", "/ws/**", "/public/**","/chat-websocket/**", "/topic/**").permitAll()
                     .antMatchers("/v2/api-docs", "/configuration/**", "/swagger*/**", "/webjars/**").permitAll()
                     .anyRequest().authenticated()
             );

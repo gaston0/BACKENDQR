@@ -12,7 +12,7 @@ services:
     volumes:
       - postgres:/var/lib/postgresql/data
     ports:
-      - 5432:5432
+      - 15432:5432  # Mapper le port du conteneur 5432 vers le port 5433 sur l'hôte
     restart: unless-stopped
     networks:
       - monitoring_net
@@ -24,6 +24,12 @@ services:
       - 8080:8080
     depends_on:
       - postgres
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=CulerMG1889++
+      - DB_NAME=sopra
     networks:
       - monitoring_net
 
