@@ -3,9 +3,11 @@ package com.bezkoder.spring.security.postgresql.service;
 import com.bezkoder.spring.security.postgresql.Dto.*;
 import com.bezkoder.spring.security.postgresql.Exeception.AnswerNotFoundException;
 import com.bezkoder.spring.security.postgresql.Exeception.ResourceNotFoundException;
+import com.bezkoder.spring.security.postgresql.Exeception.UnauthorizedException;
 import com.bezkoder.spring.security.postgresql.controllers.AnswerRequestWrapper;
 import com.bezkoder.spring.security.postgresql.controllers.QuestionRequestWrapper;
 import com.bezkoder.spring.security.postgresql.models.*;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.core.GrantedAuthority;
 
 import com.bezkoder.spring.security.postgresql.payload.request.AnswerRequest;
@@ -26,6 +28,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.mail.MessagingException;
+import javax.mail.internet.MimeMessage;
+import javax.persistence.EntityNotFoundException;
 import javax.transaction.Transactional;
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -599,11 +604,32 @@ public void deleteQuestion(Long questionId) {
     }
     @Transactional
     public void sendNotificationEmail(String userEmail, String content) {
-        SimpleMailMessage email = new SimpleMailMessage();
-        email.setTo(userEmail);
-        email.setSubject("Notification");
-        email.setText(content);
-        mailSender.send(email);
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(userEmail);
+            helper.setFrom("noreply@yourdomain.com");
+            helper.setSubject("Notification : Nouvelle activité sur votre compte");
+
+            // HTML Content
+            String htmlContent = "<html>" +
+                    "<body style='font-family: Arial, sans-serif;'>" +
+                    "<h3 style='color: #4CAF50;'>Bonjour,</h3>" +
+                    "<p>" + content + "</p>" +
+                    "<p><a href='https://yourdomain.com' style='background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>Consulter</a></p>" +
+                    "<hr style='border: none; border-top: 1px solid #ddd;'>" +
+                    "<p style='font-size: 12px; color: #888;'>Ceci est un email automatique, merci de ne pas y répondre.</p>" +
+                    "</body>" +
+                    "</html>";
+
+            helper.setText(htmlContent, true); // Enable HTML
+            mailSender.send(message);
+        } catch (MessagingException e) {
+            // Log or handle the exception
+            System.err.println("Failed to send notification email: " + e.getMessage());
+            // Consider rethrowing the exception or handling it appropriately based on your application's needs
+        }
     }
 
 
@@ -622,27 +648,33 @@ public void deleteQuestion(Long questionId) {
         return new ArrayList<>(responses);
     }
 
+    @Transactional
     @Override
     public AnswerResponse updateResponseToAnswer(Long questionId, Long parentAnswerId, Long responseId, AnswerRequest answerRequest, String username) {
+        // Fetch the user by username
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
+        // Fetch the parent answer and validate its existence and association with the question
         Answer parentAnswer = answerRepository.findById(parentAnswerId)
-                .orElseThrow(() -> new RuntimeException("Parent Answer not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Parent Answer not found"));
 
         if (!parentAnswer.getQuestion().getId().equals(questionId)) {
-            throw new RuntimeException("Parent Answer does not belong to the specified question");
+            throw new IllegalArgumentException("Parent Answer does not belong to the specified question");
         }
 
+        // Fetch the response to answer and check if the user is authorized to update it
         AnswerResponse response = answerResponseRepository.findById(responseId)
-                .orElseThrow(() -> new RuntimeException("Response to Answer not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Response to Answer not found"));
 
         if (!response.getUser().getUsername().equals(username)) {
-            throw new RuntimeException("User is not authorized to update this response to answer");
+            throw new UnauthorizedException("User is not authorized to update this response to answer");
         }
 
+        // Update the response content
         response.setContent(answerRequest.getContent());
 
+        // Save and return the updated response
         return answerResponseRepository.save(response);
     }
 

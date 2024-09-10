@@ -169,9 +169,23 @@ public class AuthServiceImpl implements AuthService {
             helper.setTo(recipientEmail);
             helper.setFrom(mailSenderEmail);
             helper.setSubject("Votre mot de passe pour l'inscription");
-            helper.setText("Votre mot de passe est : " + plainPassword, true);
-            javaMailSender.send(message);
 
+            // HTML content
+            String htmlContent = "<html>" +
+                    "<body style='font-family: Arial, sans-serif;'>" +
+                    "<h2 style='color: #4CAF50;'>Bienvenue !</h2>" +
+                    "<p>Merci de vous être inscrit. Voici votre mot de passe pour accéder à votre compte :</p>" +
+                    "<div style='background-color: #f9f9f9; padding: 10px; border-radius: 5px; border: 1px solid #ddd;'>" +
+                    "<p style='font-size: 16px; font-weight: bold;'>" + plainPassword + "</p>" +
+                    "</div>" +
+                    "<p>Nous vous recommandons de changer ce mot de passe dès votre première connexion.</p>" +
+                    "<hr>" +
+                    "<p style='font-size: 12px; color: #888;'>Si vous avez des questions, n'hésitez pas à nous contacter à tout moment.</p>" +
+                    "</body>" +
+                    "</html>";
+
+            helper.setText(htmlContent, true); // true indicates HTML content
+            javaMailSender.send(message);
             System.out.println("E-mail envoyé avec succès à : " + recipientEmail);
         } catch (MessagingException e) {
             e.printStackTrace();
